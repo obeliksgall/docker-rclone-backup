@@ -1,0 +1,54 @@
+{
+  "general": {
+    "discord_webhook_url": "https://discord.com/api/webhooks/...",
+    "notification_level": "all",
+    "config_check_interval_seconds": 10,
+    "max_concurrent_tasks": 1,
+    "default_scheduler": "0 2 * * *",
+    "default_retention_days": 7,
+    "retention_suffix": "_retention"
+	"max_log_age_days": 14,
+	"restore_global_enabled": false
+  },
+  "tasks": [
+    {
+      "name": "Zdjecia do Google Drive (Szyfrowane)",
+      "enabled": true,
+	  "restore_enabled": false,
+      "type": "sync", 
+      "source": "/source/photos",
+      "dest_remote": "gdrive_crypt:",
+      "dest_path": "Backup/Photos",
+      "scheduler": "0 1 * * *",
+      "retention": true,
+      "exclude": [".DS_Store"],
+      "extra_rclone_flags": "--tpslimit 10 --transfers 2 --checkers 4 --fast-list"
+    },
+    {
+      "name": "Ważne Projekty (Globalny Scheduler i Własna ścieżka retencji)",
+      "enabled": true,
+	  "restore_enabled": false,
+      "type": "sync",
+      "source": "/source/projects",
+      "dest_remote": "gdrive_crypt:",
+      "dest_path": "Backup/Projects",
+      "retention": {
+        "enabled": true,
+        "archive_path": "Zupelnie/Inny/Kosz/Projekty",
+        "days": 14
+      },
+      "exclude": []
+    },
+    {
+      "name": "Filmy i Serialne (Bez schedulera i bez retencji)",
+      "enabled": true,
+	  "restore_enabled": false,
+      "type": "copy",
+      "source": "/source/movies",
+      "dest_remote": "onedrive_main:",
+      "dest_path": "Media/Movies",
+      "retention": false,
+      "exclude": []
+    }
+  ]
+}

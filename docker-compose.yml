@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  rclone-backup:
+    build: .
+    # image: rclone-scheduler-image:latest
+    container_name: docker-rclone-scheduler
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - /mnt/user/photos:/source/photos:ro
+      - /mnt/user/projects:/source/projects:ro
+      - /mnt/user/movies:/source/movies:ro
+    environment:
+      - TZ=Europe/Warsaw
+      
+  # NOWY KONTENER: Do przywracania danych
+  rclone-restore:
+    build:
+      context: .
+      dockerfile: Dockerfile.restore
+    image: rclone-restore-service:latest
+    container_name: docker-rclone-restore
+    # BRAK restart: unless-stopped -> Kontener ma się wyłączyć po zakończeniu!
+    profiles:
+      - restore # Pozwala na uruchomienie go tylko na żądanie
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - /mnt/user/photos:/source/photos
+      - /mnt/user/projects:/source/projects
+      - /mnt/user/movies:/source/movies
+    environment:
+      - TZ=Europe/Warsaw
+      - RCLONE_CONFIG=/app/config/rclone.conf
