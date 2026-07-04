@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Docker Rclone Scheduler Configuration Schema",
+  "type": "object",
+  "required": [
+    "general",
+    "tasks"
+  ],
+  "properties": {
+    "general": {
+      "type": "object",
+      "required": [
+        "config_check_interval_seconds",
+        "max_concurrent_tasks",
+        "default_scheduler"
+      ],
+      "properties": {
+        "discord_webhook_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Pełny adres URL webhooka Discord do powiadomień."
+        },
+        "notification_level": {
+          "type": "string",
+          "enum": [
+            "all",
+            "errors_only",
+            "none"
+          ],
+          "default": "all",
+          "description": "Poziom szczegółowości powiadomień na Discordzie."
+        },
+        "config_check_interval_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 10,
+          "description": "Co ile sekund skrypt sprawdza zmiany w pliku config.json."
+        },
+        "max_concurrent_tasks": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Maksymalna liczba zadań wykonywanych jednocześnie przez ThreadPoolExecutor."
+        },
+        "default_scheduler": {
+          "type": "string",
+          "description": "Domyślny wyrażenie CRON (5 kolumn), jeśli zadanie nie ma własnego."
+        },
+        "default_retention_days": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 7,
+          "description": "Domyślna liczba dni przechowywania archiwów w chmurze."
+        },
+        "retention_suffix": {
+          "type": "string",
+          "default": "_retention",
+          "description": "Sufiks dodawany do nazwy katalogu archiwalnego."
+        },
+        "max_log_age_days": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 14,
+          "description": "Liczba dni, przez które przechowywane są szczegółowe logi historyczne."
+        },
+        "restore_global_enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Główny przełącznik bezpieczeństwa dla kontenera rclone-restore."
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "source",
+          "dest_remote",
+          "dest_path"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unikalna nazwa zadania, używana też do nazw logów i blokad lock."
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Czy zadanie jest aktywne w schedulerze."
+          },
+          "restore_enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Czy zadanie ma zostać wykonane podczas procedury Restore."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "sync",
+              "copy",
+              "move"
+            ],
+            "description": "Tryb pracy rclone."
+          },
+          "source": {
+            "type": "string",
+            "description": "Ścieżka źródłowa wewnątrz kontenera (np. /source/photos)."
+          },
+          "dest_remote": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]+:$",
+            "description": "Nazwa pilota rclone z dwukropkiem na końcu (np. gdrive:)."
+          },
+          "dest_path": {
+            "type": "string",
+            "description": "Ścieżka docelowa w chmurze."
+          },
+          "scheduler": {
+            "type": "string",
+            "description": "Opcjonalne, dedykowane wyrażenie CRON dla tego zadania (np. */15 * * * *)."
+          },
+          "retention": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "days": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "archive_path": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ]
+              }
+            ],
+            "default": false,
+            "description": "Konfiguracja retencji plików (włącznik prosty lub zaawansowany obiekt)."
+          },
+          "exclude": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Lista wzorców plików/katalogów do wykluczenia (np. .DS_Store)."
+          },
+          "extra_rclone_flags": {
+            "type": "string",
+            "description": "Dodatkowe flagi przekazywane bezpośrednio do rclone (np. --tpslimit 10)."
+          }
+        }
+      }
+    }
+  }
+}
